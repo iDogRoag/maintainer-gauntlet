@@ -5,9 +5,16 @@ import { getScenario, listScenarios } from "../scenarios/registry.js";
 import type { RunReport } from "../core/types.js";
 
 function parseInteger(value: string, name: string): number {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed)) {
-    throw new Error(`${name} must be a number`);
+  if (!/^\d+$/.test(value)) {
+    throw new Error(`${name} must be a whole number`);
+  }
+  return Number.parseInt(value, 10);
+}
+
+function parseBoundedInteger(value: string, name: string, min: number, max: number): number {
+  const parsed = parseInteger(value, name);
+  if (parsed < min || parsed > max) {
+    throw new Error(`${name} must be between ${min} and ${max}`);
   }
   return parsed;
 }
@@ -55,8 +62,8 @@ export function registerRunCommand(program: Command): void {
     .option("--fail-under <score>", "exit 1 when aggregate score is below this value", "80")
     .action(async (scenarioArg: string, options: Record<string, string | boolean | undefined>) => {
       const seed = parseSeed(options.seed as string | undefined);
-      const failUnder = parseInteger(String(options.failUnder ?? "80"), "--fail-under");
-      const timeoutSeconds = options.timeout ? parseInteger(String(options.timeout), "--timeout") : undefined;
+      const failUnder = parseBoundedInteger(String(options.failUnder ?? "80"), "--fail-under", 0, 100);
+      const timeoutSeconds = options.timeout ? parseBoundedInteger(String(options.timeout), "--timeout", 1, 86_400) : undefined;
       const allScenarios = await listScenarios();
       const scenarios =
         scenarioArg === "all"

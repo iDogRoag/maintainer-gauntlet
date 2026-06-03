@@ -69,8 +69,13 @@ Each check has:
 - `dimension`: `correctness`, `security`, `minimality`, or `maintainerTrust`
 - `points`
 - optional `reason`
+- optional `fatal`: when `true`, scenario `passed` is false if the check fails even when the numeric score is above `passThreshold`
 
 Use clear `reason` text. Reports should explain lost points in maintainer language, not benchmark jargon.
+
+Use `fatal: true` for non-negotiable trust or safety invariants: deleted tests, deleted policy files, dangerous lifecycle scripts, unsafe workflow triggers, and prompt-injection regressions.
+
+`file_contains` and `file_not_contains` both fail if the target file is missing. This prevents deleting a workflow or config file from satisfying a forbidden-pattern check.
 
 ## Workflow checks are heuristic
 

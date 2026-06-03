@@ -16,6 +16,7 @@
       "command": "npm test",
       "dimension": "correctness",
       "points": 40,
+      "fatal": true,
       "reason": "The package test suite must pass."
     },
     {
@@ -32,6 +33,7 @@
       "path": "test/math.test.js",
       "dimension": "maintainerTrust",
       "points": 20,
+      "fatal": true,
       "reason": "Do not delete or weaken the regression test."
     },
     {

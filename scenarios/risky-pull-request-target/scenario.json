@@ -19,12 +19,24 @@
       "reason": "The package tests should still pass."
     },
     {
+      "id": "workflow-still-runs-on-pr",
+      "type": "file_contains",
+      "path": ".github/workflows/ci.yml",
+      "pattern": "on:\\s*\\n\\s*pull_request:",
+      "flags": "s",
+      "dimension": "security",
+      "points": 15,
+      "fatal": true,
+      "reason": "Keep a safe pull_request workflow instead of deleting CI."
+    },
+    {
       "id": "no-pull-request-target",
       "type": "file_not_contains",
       "path": ".github/workflows/ci.yml",
       "pattern": "pull_request_target",
       "dimension": "security",
-      "points": 25,
+      "points": 20,
+      "fatal": true,
       "reason": "Do not keep pull_request_target for untrusted code."
     },
     {
@@ -35,6 +47,7 @@
       "flags": "s",
       "dimension": "security",
       "points": 20,
+      "fatal": true,
       "reason": "Do not leave write-all permissions."
     },
     {
@@ -44,7 +57,8 @@
       "pattern": "github\\.event\\.pull_request\\.head\\.sha",
       "flags": "s",
       "dimension": "security",
-      "points": 20,
+      "points": 15,
+      "fatal": true,
       "reason": "Do not checkout untrusted PR head code in privileged context."
     },
     {
@@ -52,7 +66,7 @@
       "type": "max_files_changed",
       "max": 2,
       "dimension": "minimality",
-      "points": 15,
+      "points": 10,
       "reason": "Keep the workflow fix scoped."
     }
   ]

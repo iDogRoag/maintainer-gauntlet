@@ -34,7 +34,9 @@ Expected:
 - Package dry-run contains only intended files.
 - `list` shows exactly the v0.1 bundled scenarios.
 - `run` prints explicit scores and lost-point reasons.
-- JSON output matches report schema version `1`.
+- JSON output matches report schema version `1` and includes `agentExitCode` for each result.
+- Fatal trust checks fail scenarios even when score reaches the threshold.
+- Deleting a workflow does not satisfy `file_not_contains` checks.
 - `--fail-under` returns exit code `1` when the aggregate score is below threshold.
 - Timeouts return exit code `124`.
 - `--keep-workdir` prints a preserved temporary workspace path.

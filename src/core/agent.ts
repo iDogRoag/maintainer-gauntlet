@@ -1,4 +1,4 @@
-import { execa } from "execa";
+import { spawn } from "node:child_process";
 import { withPackageBinPath } from "./package-root.js";
 
 export type AgentCommandOptions = {
@@ -35,6 +35,18 @@ export function expandAgentCommand(command: string, options: AgentCommandOptions
   );
 }
 
+function killProcessGroup(pid: number, signal: NodeJS.Signals): void {
+  try {
+    process.kill(-pid, signal);
+  } catch {
+    try {
+      process.kill(pid, signal);
+    } catch {
+      // Process already exited.
+    }
+  }
+}
+
 export async function runAgentCommand(options: AgentCommandOptions): Promise<AgentCommandResult> {
   const expandedCommand = expandAgentCommand(options.command, options);
   const env = withPackageBinPath({
@@ -45,27 +57,57 @@ export async function runAgentCommand(options: AgentCommandOptions): Promise<Age
     MG_SEED: String(options.seed)
   });
 
-  try {
-    const result = await execa("sh", ["-lc", expandedCommand], {
+  return new Promise((resolve) => {
+    const child = spawn("sh", ["-lc", expandedCommand], {
       cwd: options.workdir,
       env,
-      reject: false,
-      timeout: options.timeoutSeconds * 1000
+      detached: true,
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+    let timedOut = false;
+    let killTimer: NodeJS.Timeout | undefined;
+
+    child.stdout?.on("data", (chunk: Buffer) => stdoutChunks.push(chunk));
+    child.stderr?.on("data", (chunk: Buffer) => stderrChunks.push(chunk));
+
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      if (child.pid) {
+        killProcessGroup(child.pid, "SIGTERM");
+        killTimer = setTimeout(() => {
+          if (child.pid) {
+            killProcessGroup(child.pid, "SIGKILL");
+          }
+        }, 1000);
+      }
+    }, options.timeoutSeconds * 1000);
+
+    child.on("error", (error) => {
+      clearTimeout(timeout);
+      if (killTimer) {
+        clearTimeout(killTimer);
+      }
+      resolve({
+        exitCode: 1,
+        stdout: Buffer.concat(stdoutChunks).toString("utf8"),
+        stderr: `${Buffer.concat(stderrChunks).toString("utf8")}${error.message}`,
+        timedOut
+      });
     });
 
-    return {
-      exitCode: result.exitCode ?? 0,
-      stdout: result.stdout,
-      stderr: result.stderr,
-      timedOut: false
-    };
-  } catch (error) {
-    const err = error as { exitCode?: number; stdout?: string; stderr?: string; timedOut?: boolean };
-    return {
-      exitCode: err.timedOut ? 124 : err.exitCode ?? 1,
-      stdout: err.stdout ?? "",
-      stderr: err.stderr ?? "",
-      timedOut: err.timedOut ?? false
-    };
-  }
+    child.on("close", (code) => {
+      clearTimeout(timeout);
+      if (killTimer) {
+        clearTimeout(killTimer);
+      }
+      resolve({
+        exitCode: timedOut ? 124 : code ?? 1,
+        stdout: Buffer.concat(stdoutChunks).toString("utf8"),
+        stderr: Buffer.concat(stderrChunks).toString("utf8"),
+        timedOut
+      });
+    });
+  });
 }

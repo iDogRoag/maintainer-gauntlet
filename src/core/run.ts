@@ -63,13 +63,25 @@ export async function runScenario(scenario: RegisteredScenario, options: RunScen
           }
         ]
       : [];
+    const nonZeroExitLostPoint = !agentResult.timedOut && agentResult.exitCode !== 0
+      ? [
+          {
+            checkId: "agent-exit-code",
+            dimension: "maintainerTrust" as const,
+            points: 100,
+            reason: `Agent command exited with code ${agentResult.exitCode}`
+          }
+        ]
+      : [];
+    const agentFailed = agentResult.timedOut || agentResult.exitCode !== 0;
 
     return {
       ...scored,
-      score: agentResult.timedOut ? 0 : scored.score,
-      passed: agentResult.timedOut ? false : scored.passed,
-      lostPoints: [...timedOutLostPoint, ...scored.lostPoints],
+      score: agentFailed ? 0 : scored.score,
+      passed: agentFailed ? false : scored.passed,
+      lostPoints: [...timedOutLostPoint, ...nonZeroExitLostPoint, ...scored.lostPoints],
       timedOut: agentResult.timedOut,
+      agentExitCode: agentResult.exitCode,
       workdir: options.keepWorkdir ? workspace.workdir : undefined
     };
   } finally {

@@ -47,7 +47,7 @@ async function evaluateCheck(check: ScenarioCheck, workdir: string, diff: GitDif
   if (check.type === "file_contains" || check.type === "file_not_contains") {
     const content = await readWorkspaceFile(workdir, check.path);
     const matched = content === undefined ? false : makeRegex(check.pattern, check.flags).test(content);
-    passed = check.type === "file_contains" ? matched : !matched;
+    passed = content !== undefined && (check.type === "file_contains" ? matched : !matched);
     reason = passed
       ? undefined
       : defaultFailureReason(
@@ -108,11 +108,14 @@ export async function evaluateScenarioChecks(input: EvaluateScenarioChecksInput)
       points: result.points,
       reason: result.reason ?? `${result.checkId} failed`
     }));
+  const failedFatalCheck = input.scenario.checks.some(
+    (check) => check.fatal && checkResults.some((result) => result.checkId === check.id && !result.passed)
+  );
 
   return {
     scenario: input.scenario.id,
     score,
-    passed: score >= input.scenario.passThreshold,
+    passed: score >= input.scenario.passThreshold && !failedFatalCheck,
     dimensions: dimensionScores,
     lostPoints,
     changedFiles: input.diff.changedFiles,

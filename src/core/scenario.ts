@@ -13,7 +13,8 @@ const scenarioCheckBaseSchema = {
   id: z.string().min(1),
   dimension: scoreDimensionSchema,
   points: z.number().int().nonnegative(),
-  reason: z.string().min(1).optional()
+  reason: z.string().min(1).optional(),
+  fatal: z.boolean().optional()
 };
 
 const regexFlagsSchema = z.string().regex(/^[dgimsuvy]*$/).optional();
