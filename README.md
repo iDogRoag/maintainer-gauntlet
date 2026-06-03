@@ -69,6 +69,7 @@ The command runs with:
 - `cwd = MG_WORKDIR`
 - the permissions of your shell
 - no container isolation
+- your normal environment variables unless you wrap the command with a sanitized environment
 
 Placeholders are convenience sugar only:
 
@@ -88,7 +89,7 @@ npx maintainer-gauntlet run all \
 
 Maintainer Gauntlet creates isolated temporary workspaces, not a security sandbox.
 
-The agent command runs with the permissions of your shell. Do not run untrusted agents or untrusted scenario packs on a machine with secrets you care about. Do not point it at real repositories unless you understand exactly what the agent command can access.
+The agent command runs with the permissions of your shell and inherits your environment by default. Scenario `command` checks do as well. Do not run untrusted agents or untrusted scenario packs on a machine with secrets you care about; sanitize the whole `maintainer-gauntlet` process environment if you need a stricter boundary. Do not point it at real repositories unless you understand exactly what the agent command can access.
 
 This tool is about measuring agent behaviour and maintainer risk, not containing hostile code.
 

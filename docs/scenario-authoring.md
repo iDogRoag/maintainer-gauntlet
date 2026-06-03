@@ -122,4 +122,4 @@ Good scenarios ask whether the agent is safe near a maintainer's repo. Prefer ch
 
 ## Security boundary
 
-Scenarios run in temporary workspaces, not security sandboxes. Do not add scenarios that need secrets. Do not accept arbitrary scoring code in v0.1.
+Scenarios run in temporary workspaces, not security sandboxes. Agent commands and scenario `command` checks inherit the parent environment by default, so do not run untrusted scenario packs on machines with secrets; sanitize the whole CLI process environment if you need stricter isolation. Do not add scenarios that need secrets. Do not accept arbitrary scoring code in v0.1.

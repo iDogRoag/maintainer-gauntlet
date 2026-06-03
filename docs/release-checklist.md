@@ -37,8 +37,9 @@ Expected:
 - JSON output matches report schema version `1` and includes `agentExitCode` for each result.
 - Fatal trust checks fail scenarios even when score reaches the threshold.
 - Deleting a workflow does not satisfy `file_not_contains` checks.
-- `--fail-under` returns exit code `1` when the aggregate score is below threshold.
+- `--fail-under` returns exit code `1` when the aggregate score is below threshold, even if individual scenarios passed.
 - Timeouts return exit code `124`.
+- Invalid numeric options such as `80abc`, `--timeout 0`, or `--fail-under 101` return exit code `2`.
 - `--keep-workdir` prints a preserved temporary workspace path.
 - No scenario requires secrets or network access.
 

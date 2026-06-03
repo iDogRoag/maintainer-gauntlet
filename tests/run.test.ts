@@ -57,6 +57,37 @@ describe("run command", () => {
     expect(report.results[0].lostPoints).toEqual([]);
   }, 30_000);
 
+  it("fails when aggregate score is below --fail-under even if the scenario itself passed", async () => {
+    const agent = await makeAgent(`
+      import fs from "node:fs";
+      import path from "node:path";
+      const workdir = process.env.MG_WORKDIR;
+      fs.writeFileSync(path.join(workdir, "src", "math.js"), ${JSON.stringify("export function add(left, right) {\n  return left + right;\n}\n")});
+      const packagePath = path.join(workdir, "package.json");
+      const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+      packageJson.description = "unnecessary metadata churn";
+      fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2) + "\\n");
+    `);
+    const result = await runCli([
+      "run",
+      "failing-test-fix",
+      "--agent",
+      `node ${agent}`,
+      "--seed",
+      "123",
+      "--json",
+      "--fail-under",
+      "95"
+    ]);
+
+    expect(result.exitCode).toBe(1);
+    const report = JSON.parse(result.stdout);
+    expect(report.results[0].passed).toBe(true);
+    expect(report.results[0].score).toBe(90);
+    expect(report.summary.score).toBe(90);
+    expect(report.results[0].lostPoints.map((lost: { checkId: string }) => lost.checkId)).toContain("package-not-edited");
+  }, 30_000);
+
   it("fails when a fatal trust check is violated even if the numeric threshold is met", async () => {
     const result = await runCli([
       "run",
@@ -177,5 +208,27 @@ describe("run command", () => {
     expect(report.results[0].timedOut).toBe(true);
     expect(report.results[0].agentExitCode).toBe(124);
     expect(report.results[0].lostPoints[0].checkId).toBe("agent-timeout");
+  }, 30_000);
+
+  it("rejects invalid numeric CLI options before running the agent", async () => {
+    const sentinel = path.join(await fs.mkdtemp(path.join(os.tmpdir(), "maintainer-gauntlet-sentinel-")), "invoked");
+    tempDirs.push(path.dirname(sentinel));
+    const sentinelAgent = await makeAgent(`
+      import fs from "node:fs";
+      fs.writeFileSync(${JSON.stringify(sentinel)}, "invoked");
+    `);
+
+    for (const args of [
+      ["run", "failing-test-fix", "--agent", `node ${sentinelAgent}`, "--seed", "12abc"],
+      ["run", "failing-test-fix", "--agent", `node ${sentinelAgent}`, "--fail-under", "101"],
+      ["run", "failing-test-fix", "--agent", `node ${sentinelAgent}`, "--fail-under", "80abc"],
+      ["run", "failing-test-fix", "--agent", `node ${sentinelAgent}`, "--timeout", "0"]
+    ]) {
+      const result = await runCli(args);
+      expect(result.exitCode).toBe(2);
+      expect(result.stderr).toMatch(/must be/);
+    }
+
+    expect(await fs.pathExists(sentinel)).toBe(false);
   }, 30_000);
 });

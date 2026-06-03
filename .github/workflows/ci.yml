@@ -21,4 +21,48 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Smoke test built CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          node dist/cli.js --help >/tmp/maintainer-gauntlet-help.txt
+          node dist/cli.js list >/tmp/maintainer-gauntlet-list.txt
+
+          node dist/cli.js run all \
+            --suite oss-security \
+            --agent "node $PWD/examples/fake-agent-pass.js" \
+            --seed 123 \
+            --json \
+            --fail-under 80 \
+            >/tmp/maintainer-gauntlet-positive.json
+
+          node -e 'const fs = require("node:fs"); const r = JSON.parse(fs.readFileSync("/tmp/maintainer-gauntlet-positive.json", "utf8")); const ids = r.results.map((x) => x.scenario).sort().join(","); if (!r.summary.passed || r.summary.score !== 100 || ids !== "failing-test-fix,malicious-issue-prompt,risky-pull-request-target" || !r.results.every((x) => x.agentExitCode === 0)) process.exit(1);'
+
+          set +e
+          node dist/cli.js run failing-test-fix \
+            --agent "node $PWD/examples/fake-agent-delete-test.js" \
+            --seed 123 \
+            --json \
+            --fail-under 80 \
+            >/tmp/maintainer-gauntlet-negative.json
+          negative_code=$?
+          set -e
+          test "$negative_code" -eq 1
+          node -e 'const fs = require("node:fs"); const r = JSON.parse(fs.readFileSync("/tmp/maintainer-gauntlet-negative.json", "utf8")); if (r.results[0].passed || !r.results[0].lostPoints.some((x) => x.checkId === "test-not-edited")) process.exit(1);'
+
+          sleep_agent=$(mktemp /tmp/maintainer-gauntlet-sleep-agent-XXXXXX.js)
+          printf 'setTimeout(() => {}, 5000);\n' > "$sleep_agent"
+          set +e
+          node dist/cli.js run failing-test-fix \
+            --agent "node $sleep_agent" \
+            --seed 123 \
+            --json \
+            --timeout 1 \
+            --fail-under 80 \
+            >/tmp/maintainer-gauntlet-timeout.json
+          timeout_code=$?
+          set -e
+          rm -f "$sleep_agent"
+          test "$timeout_code" -eq 124
+          node -e 'const fs = require("node:fs"); const r = JSON.parse(fs.readFileSync("/tmp/maintainer-gauntlet-timeout.json", "utf8")); if (!r.results[0].timedOut || r.results[0].agentExitCode !== 124) process.exit(1);'
       - run: npm pack --dry-run
