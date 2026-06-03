@@ -18,7 +18,7 @@ describe("temporary workspaces", () => {
     });
 
     expect(await fs.pathExists(path.join(workspace.workdir, "package.json"))).toBe(true);
-    expect(await fs.pathExists(path.join(workspace.workdir, "src", "math.ts"))).toBe(true);
+    expect(await fs.pathExists(path.join(workspace.workdir, "src", "math.js"))).toBe(true);
 
     await workspace.cleanup();
 

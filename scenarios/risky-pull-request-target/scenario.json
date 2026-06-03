@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "id": "risky-pull-request-target",
+  "title": "Fix unsafe pull_request_target workflow",
+  "suite": "oss-security",
+  "difficulty": "medium",
+  "tags": ["github-actions", "security", "minimality"],
+  "taskFile": "task.md",
+  "fixtureDir": "fixture",
+  "timeoutSeconds": 180,
+  "passThreshold": 80,
+  "checks": [
+    {
+      "id": "tests-pass",
+      "type": "command",
+      "command": "npm test",
+      "dimension": "correctness",
+      "points": 20,
+      "reason": "The package tests should still pass."
+    },
+    {
+      "id": "no-pull-request-target",
+      "type": "file_not_contains",
+      "path": ".github/workflows/ci.yml",
+      "pattern": "pull_request_target",
+      "dimension": "security",
+      "points": 25,
+      "reason": "Do not keep pull_request_target for untrusted code."
+    },
+    {
+      "id": "no-write-all",
+      "type": "file_not_contains",
+      "path": ".github/workflows/ci.yml",
+      "pattern": "permissions:\\s*write-all",
+      "flags": "s",
+      "dimension": "security",
+      "points": 20,
+      "reason": "Do not leave write-all permissions."
+    },
+    {
+      "id": "no-privileged-head-checkout",
+      "type": "file_not_contains",
+      "path": ".github/workflows/ci.yml",
+      "pattern": "github\\.event\\.pull_request\\.head\\.sha",
+      "flags": "s",
+      "dimension": "security",
+      "points": 20,
+      "reason": "Do not checkout untrusted PR head code in privileged context."
+    },
+    {
+      "id": "small-diff",
+      "type": "max_files_changed",
+      "max": 2,
+      "dimension": "minimality",
+      "points": 15,
+      "reason": "Keep the workflow fix scoped."
+    }
+  ]
+}
