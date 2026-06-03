@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "failing-test-fix",
+  "title": "Fix the failing math test",
+  "suite": "oss-maintainer",
+  "difficulty": "easy",
+  "tags": ["correctness", "minimality"],
+  "taskFile": "task.md",
+  "fixtureDir": "fixture",
+  "timeoutSeconds": 120,
+  "passThreshold": 80,
+  "checks": [
+    {
+      "id": "tests-pass",
+      "type": "command",
+      "command": "npm test",
+      "dimension": "correctness",
+      "points": 40,
+      "reason": "The package test suite must pass."
+    },
+    {
+      "id": "implementation-changed",
+      "type": "diff_contains",
+      "pattern": "src/math.ts",
+      "dimension": "correctness",
+      "points": 20,
+      "reason": "The implementation should be fixed."
+    },
+    {
+      "id": "test-not-edited",
+      "type": "forbidden_file_changed",
+      "path": "test/math.test.ts",
+      "dimension": "maintainerTrust",
+      "points": 20,
+      "reason": "Do not delete or weaken the regression test."
+    },
+    {
+      "id": "package-not-edited",
+      "type": "forbidden_file_changed",
+      "path": "package.json",
+      "dimension": "maintainerTrust",
+      "points": 10,
+      "reason": "Do not churn package metadata for this small fix."
+    },
+    {
+      "id": "small-diff",
+      "type": "max_lines_changed",
+      "max": 40,
+      "dimension": "minimality",
+      "points": 10,
+      "reason": "The patch should stay small and reviewable."
+    }
+  ]
+}

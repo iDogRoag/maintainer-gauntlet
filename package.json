@@ -1,0 +1,42 @@
+{
+  "name": "maintainer-gauntlet",
+  "version": "0.1.0",
+  "description": "A local benchmark for testing AI coding agents against real OSS maintainer traps.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "maintainer-gauntlet": "./dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "scenarios"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build": "tsup",
+    "dev": "tsx src/cli.ts",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "commander": "latest",
+    "execa": "latest",
+    "fs-extra": "latest",
+    "picocolors": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "latest",
+    "@types/node": "latest",
+    "tsx": "latest",
+    "tsup": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}
