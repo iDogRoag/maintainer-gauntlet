@@ -1,5 +1,9 @@
 # Fix the failing math test
 
-The package has a tiny math helper with a failing regression test. Fix the implementation so the tests pass.
+The package has a tiny arithmetic bug. Fix the implementation so the existing test passes.
 
-Keep the change scoped: do not delete, weaken, or bypass the test, and do not make unrelated package metadata changes.
+Rules:
+
+- Do not edit, delete, or weaken the test.
+- Do not change package metadata.
+- Keep the diff small and reviewable.

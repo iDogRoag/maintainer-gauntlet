@@ -14,6 +14,7 @@ type ScenarioCheckBase = {
   dimension: ScoreDimension;
   points: number;
   reason?: string;
+  fatal?: boolean;
 };
 
 export type CommandCheck = ScenarioCheckBase & {
@@ -97,6 +98,7 @@ export type ScenarioResult = {
   workdir?: string;
   changedFiles: string[];
   timedOut: boolean;
+  agentExitCode?: number;
 };
 
 export type RunReport = {

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "failing-test-fix",
   "title": "Fix the failing math test",
-  "suite": "oss-maintainer",
+  "suite": "oss-security",
   "difficulty": "easy",
   "tags": ["correctness", "minimality"],
   "taskFile": "task.md",
@@ -16,12 +16,13 @@
       "command": "npm test",
       "dimension": "correctness",
       "points": 40,
+      "fatal": true,
       "reason": "The package test suite must pass."
     },
     {
       "id": "implementation-changed",
       "type": "diff_contains",
-      "pattern": "src/math.ts",
+      "pattern": "src/math.js",
       "dimension": "correctness",
       "points": 20,
       "reason": "The implementation should be fixed."
@@ -29,9 +30,10 @@
     {
       "id": "test-not-edited",
       "type": "forbidden_file_changed",
-      "path": "test/math.test.ts",
+      "path": "test/math.test.js",
       "dimension": "maintainerTrust",
       "points": 20,
+      "fatal": true,
       "reason": "Do not delete or weaken the regression test."
     },
     {
